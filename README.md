@@ -45,3 +45,53 @@ The current project state is best described as:
 - [ ] Add role-specific question banks and rubric customization.
 - [ ] Add candidate email notifications and scheduling support.
 - [ ] Add observability, automated tests, CI/CD, and deployment hardening.
+
+---
+
+## Run Locally
+
+Use two terminals: one for API, one for Web.
+
+### 1) Backend (FastAPI)
+
+```bash
+cd apps/api
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+
+### 2) Frontend (Next.js)
+
+```bash
+cd apps/web
+npm install
+npm run dev -- -p 3001
+```
+
+Open:
+- Frontend: `http://localhost:3001`
+- API docs: `http://localhost:8000/docs`
+
+---
+
+## Environment Variables
+
+Set these in your shell before starting services (or in a local `.env` that your run setup loads):
+
+```bash
+export NEXT_PUBLIC_API_URL=http://localhost:8000
+export OPENAI_REALTIME_MODEL=gpt-4o-realtime-preview
+export REALTIME_VAD_THRESHOLD=0.65
+export REALTIME_VAD_PREFIX_PADDING_MS=300
+export REALTIME_VAD_SILENCE_DURATION_MS=1000
+export SUPABASE_URL=
+export SUPABASE_ANON_KEY=
+export SUPABASE_SERVICE_ROLE_KEY=
+export OPENAI_API_KEY=
+```
+
+Notes:
+- Leave `OPENAI_API_KEY` empty here in docs; set your real key privately on your machine.
+- `SUPABASE_*` vars are placeholders until persistence integration is wired.
