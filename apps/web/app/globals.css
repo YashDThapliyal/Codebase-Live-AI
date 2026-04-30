@@ -7,10 +7,46 @@
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
-  font-family: "Manrope", "Segoe UI", sans-serif;
+  @apply min-h-screen bg-slate-50 text-slate-900 antialiased;
+  font-family: var(--font-body), "Manrope", system-ui, sans-serif;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-display), system-ui, sans-serif;
 }
 
 main {
-  @apply mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8;
+  @apply mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8;
+}
+
+::selection {
+  @apply bg-brand-100 text-brand-800;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Score bar fill utility */
+.score-bar-fill {
+  animation: scoreFill 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes scoreFill {
+  from { width: 0%; }
+  to { width: var(--score-width); }
+}
+
+/* Interview room dark page */
+.interview-room {
+  background: radial-gradient(ellipse at 50% 0%, rgba(99, 102, 241, 0.12) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 100%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
+              #040a14;
+}
+
+/* Subtle dot grid for hero */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(79, 70, 229, 0.12) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
