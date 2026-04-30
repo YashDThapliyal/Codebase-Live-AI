@@ -28,3 +28,31 @@ export async function listCandidates(): Promise<Candidate[]> {
 export async function getTranscript(_sessionId: string): Promise<InterviewMessage[]> {
   return mockTranscript;
 }
+
+export async function createRealtimeSession(preferredLanguage?: string): Promise<any> {
+  const res = await fetch(`${API_URL}/realtime/session`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ preferred_language: preferredLanguage || "English" })
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok || data?.error) {
+    throw new Error(data?.error || "Failed to create realtime session");
+  }
+
+  return data;
+}
+
+export async function pushRealtimeDebugLog(payload: unknown): Promise<void> {
+  await fetch(`${API_URL}/realtime/debug-log`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  }).catch(() => undefined);
+}

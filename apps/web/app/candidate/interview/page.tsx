@@ -1,11 +1,5 @@
-import { PageHeader } from "@/components/shared/PageHeader";
-import { TextInterview } from "@/components/candidate/TextInterview";
+import { VoiceInterview } from "@/components/candidate/VoiceInterview";
 
 export default function CandidateInterviewPage() {
-  return (
-    <div className="space-y-4">
-      <PageHeader title="Interview" subtitle="Answer one prompt at a time. Keep responses concise and concrete." />
-      <TextInterview />
-    </div>
-  );
+  return <VoiceInterview />;
 }

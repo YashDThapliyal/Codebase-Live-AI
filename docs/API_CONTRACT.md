@@ -67,3 +67,16 @@ List applicant review objects (candidate + session + transcript + scorecard + no
 
 ## GET /admin/applicants/{candidate_id}
 Get full review details for a candidate.
+
+## POST /realtime/session
+Create an ephemeral OpenAI Realtime session for browser WebRTC voice interview.
+
+Behavior:
+- Reads `OPENAI_API_KEY` from backend env
+- Uses `OPENAI_REALTIME_MODEL` if provided, else defaults to a realtime-capable model string
+- Injects interviewer instructions into session creation
+- Returns OpenAI session JSON including ephemeral client secret
+- If key is missing, returns:
+```json
+{ "error": "OPENAI_API_KEY is not configured" }
+```
