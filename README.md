@@ -1,58 +1,47 @@
-# Codebase Live-Screen
+# Codebase Live AI
 
-## Project Overview
+Codebase Live AI is an AI-powered live interview screening platform for Codebase recruitment.
 
-**Codebase Live-Screen** is a Mercor-style AI interview portal for Codebase applicants. The goal is to create a natural, voice-to-voice interview experience where an AI interviewer can evaluate a candidate’s technical depth, project ownership, problem-solving ability, communication style, and fit with Codebase’s mission.
+Candidates complete a guided AI interview, interview transcripts are stored, a post-interview grader agent produces evidence-based scorecards, and admins review applicants in a lightweight dashboard.
 
-The platform currently includes a **Next.js frontend**, a **FastAPI backend**, and an implemented **OpenAI Realtime voice interview MVP** using WebRTC. The product is currently mock-first in several areas, but the core realtime voice path is functional: the browser can connect to the OpenAI Realtime API through backend-minted ephemeral credentials, conduct a live voice session, and display session/debug information in the frontend.
+## Why This Repo Is Structured This Way
 
-The current project state is best described as:
+This project is intentionally optimized for a 3-person team where humans focus on AI logic, backend/data, integration, and QA.
 
-> A polished mock-first interview platform with a real realtime voice interview MVP.  
-> The next phase is persistence, live data wiring, auth, resume ingestion, and production hardening.
+The frontend is scaffolded and generated so the team does **not** spend excessive time building UI from scratch. It is modern, Tailwind-based, mock-data friendly, and easy to replace later.
 
----
+## Architecture
 
-## TODOs
-## Completed
+- Monorepo layout with clear ownership boundaries
+- `apps/web`: Next.js + React + TypeScript + Tailwind frontend
+- `apps/api`: FastAPI backend with mock in-memory data
+- `supabase/migrations`: Supabase-ready SQL schema + placeholder RLS
+- `docs`: project spec, contracts, phase planning, scoring rubric, ownership docs
 
-- [x] Set up monorepo structure for frontend, backend, database migrations, and docs.
-- [x] Built candidate-facing interview flow: login, lobby, interview, and completion pages.
-- [x] Implemented a working OpenAI Realtime voice interview MVP using WebRTC.
-- [x] Added backend endpoint for secure ephemeral Realtime credential creation.
-- [x] Added voice interview UI states, debug panel, language selector, and fallback handling.
-- [x] Built FastAPI backend route scaffolding for candidates, interviews, grading, admin, and realtime.
-- [x] Added mock interview phase logic, follow-up behavior, resume summary, and scorecard generation.
-- [x] Built admin review UI for applicant list, transcript, scorecard, notes, and red flags.
-- [x] Added Supabase migration scaffolding for future persistence.
+## Team Split
 
-## Need to Have
+- Person 1: AI Interview Engine Owner
+- Person 2: Backend / Data / Supabase Owner
+- Person 3: Product Integration / Admin Review / QA Owner
+- Codex: Frontend scaffold generation and extension points
 
-- [ ] Connect frontend, backend, and Supabase so the app uses real persisted data.
-- [ ] Persist realtime voice transcripts and make them available in the admin dashboard.
-- [ ] Add real candidate and admin authentication/session management.
-- [ ] Implement real resume upload, storage, parsing, and resume-aware interview prompts.
-- [ ] Replace mock interviewer and mock grader with real LLM-driven interview and scoring logic.
-- [ ] Wire admin dashboard to live backend data instead of frontend mock data.
-- [ ] Harden realtime voice reliability, reconnect behavior, error handling, and clean interview ending.
-- [ ] Update README/docs to accurately reflect that realtime voice MVP is already implemented.
+See: `docs/TEAM_SPLIT.md`.
 
-## Nice to Have
+## Local Setup
 
-- [ ] Add analytics dashboard for applicant funnel, scores, and completion rates.
-- [ ] Add richer scorecard visualizations and evidence-linked scoring.
-- [ ] Add interview playback or timestamped transcript review.
-- [ ] Add role-specific question banks and rubric customization.
-- [ ] Add candidate email notifications and scheduling support.
-- [ ] Add observability, automated tests, CI/CD, and deployment hardening.
+### Prerequisites
 
----
+- Node.js 20+
+- Python 3.11+
+- pip
 
-## Run Locally
+### 1) Clone and configure
 
-Use two terminals: one for API, one for Web.
+```bash
+cp .env.example .env
+```
 
-### 1) Backend (FastAPI)
+### 2) Run API
 
 ```bash
 cd apps/api
@@ -62,36 +51,50 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
-### 2) Frontend (Next.js)
+### 3) Run Web
 
 ```bash
 cd apps/web
 npm install
-npm run dev -- -p 3001
+npm run dev
 ```
 
-Open:
-- Frontend: `http://localhost:3001`
-- API docs: `http://localhost:8000/docs`
-
----
+Web runs on `http://localhost:3000`, API on `http://localhost:8000`.
 
 ## Environment Variables
 
-Set these in your shell before starting services (or in a local `.env` that your run setup loads):
+See `.env.example`.
 
-```bash
-export NEXT_PUBLIC_API_URL=http://localhost:8000
-export OPENAI_REALTIME_MODEL=gpt-4o-realtime-preview
-export REALTIME_VAD_THRESHOLD=0.65
-export REALTIME_VAD_PREFIX_PADDING_MS=300
-export REALTIME_VAD_SILENCE_DURATION_MS=1000
-export SUPABASE_URL=
-export SUPABASE_ANON_KEY=
-export SUPABASE_SERVICE_ROLE_KEY=
-export OPENAI_API_KEY=
-```
+- `NEXT_PUBLIC_API_URL` for frontend API base URL
+- Supabase variables are placeholders for future integration
+- `OPENAI_API_KEY` is backend-only usage; never expose in frontend code
 
-Notes:
-- Leave `OPENAI_API_KEY` empty here in docs; set your real key privately on your machine.
-- `SUPABASE_*` vars are placeholders until persistence integration is wired.
+## Development Roadmap
+
+- Milestone 1: Working scaffold with mock data (this repo state)
+- Milestone 2: Text-based interview MVP end-to-end
+- Later: Voice interview via OpenAI Realtime API (scaffold only right now)
+
+Detailed plan: `docs/PHASE_PLAN.md`.
+
+## Parallel Work Guidance
+
+Each owner should mostly stay inside their owned paths to reduce merge conflicts.
+
+- Person 1 works in `apps/api/app/services/*` + AI docs
+- Person 2 works in API routes/models/db + migrations + contracts
+- Person 3 works in admin UI + web integration layer + QA docs
+
+When changing cross-cutting contracts, update:
+
+- `docs/API_CONTRACT.md`
+- `apps/web/lib/types.ts`
+- `apps/api/app/models/schemas.py`
+
+## Current Scope
+
+- Text interview flow only
+- Mock resume parsing and mock grading
+- Mock backend data store
+- Supabase-ready migration placeholders
+- Realtime voice support deferred (scaffold and docs only)
