@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.db.client import get_db
+from app.middleware.auth import require_admin
 from app.models.schemas import ApplicantDetail, ReviewerNote
 from app.services.grader import build_mock_scorecard
 
@@ -8,7 +9,7 @@ router = APIRouter()
 
 
 @router.get("/applicants", response_model=list[ApplicantDetail])
-def list_applicants():
+def list_applicants(_user: dict = Depends(require_admin)):
   db = get_db()
   details: list[ApplicantDetail] = []
 
@@ -34,7 +35,7 @@ def list_applicants():
 
 
 @router.get("/applicants/{candidate_id}", response_model=ApplicantDetail)
-def get_applicant_detail(candidate_id: str):
+def get_applicant_detail(candidate_id: str, _user: dict = Depends(require_admin)):
   db = get_db()
 
   candidate = db.candidates.get(candidate_id)

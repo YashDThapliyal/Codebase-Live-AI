@@ -1,8 +1,9 @@
 import uuid
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.db.client import get_db
+from app.middleware.auth import require_auth
 from app.db.mock_db import now_iso
 from app.models.schemas import (
   InterviewMessage,
@@ -19,7 +20,7 @@ router = APIRouter()
 
 
 @router.post("/start", response_model=InterviewSession)
-def start_interview(payload: InterviewStartRequest):
+def start_interview(payload: InterviewStartRequest, _user: dict = Depends(require_auth)):
   db = get_db()
   if payload.candidate_id not in db.candidates:
     raise HTTPException(status_code=404, detail="Candidate not found")
@@ -39,7 +40,7 @@ def start_interview(payload: InterviewStartRequest):
 
 
 @router.post("/{session_id}/message", response_model=InterviewTurnResponse)
-def post_interview_message(session_id: str, payload: InterviewMessageRequest):
+def post_interview_message(session_id: str, payload: InterviewMessageRequest, _user: dict = Depends(require_auth)):
   db = get_db()
   session = db.sessions.get(session_id)
   if not session:
@@ -75,7 +76,7 @@ def post_interview_message(session_id: str, payload: InterviewMessageRequest):
 
 
 @router.post("/{session_id}/end", response_model=InterviewSession)
-def end_interview(session_id: str):
+def end_interview(session_id: str, _user: dict = Depends(require_auth)):
   db = get_db()
   session = db.sessions.get(session_id)
   if not session:

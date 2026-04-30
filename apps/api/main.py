@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import admin, candidates, grading, health, interviews, realtime
+from app.routes import admin, auth, candidates, grading, health, interviews, realtime
 
 app = FastAPI(title="Codebase Live AI API", version="0.1.0")
 
@@ -19,6 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(candidates.router, prefix="/candidates", tags=["candidates"])
 app.include_router(interviews.router, prefix="/interviews", tags=["interviews"])
 app.include_router(grading.router, prefix="/grading", tags=["grading"])
