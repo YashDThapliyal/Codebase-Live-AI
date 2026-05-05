@@ -4,6 +4,7 @@ import { getApplicant } from "@/lib/api";
 import { TranscriptView } from "@/components/admin/TranscriptView";
 import { ScorecardView } from "@/components/admin/ScorecardView";
 import { ReviewerNotes } from "@/components/admin/ReviewerNotes";
+import { SessionStatusPanel } from "@/components/admin/SessionStatusPanel";
 
 export default async function ApplicantDetailPage({ params }: { params: { id: string } }) {
   const detail = await getApplicant(params.id);
@@ -13,9 +14,10 @@ export default async function ApplicantDetailPage({ params }: { params: { id: st
     <div className="space-y-4">
       <PageHeader
         title={`${detail.candidate.full_name} · ${detail.candidate.role_applied}`}
-        subtitle="Transcript, scorecard, red flags, and reviewer notes"
+        subtitle="Evidence-based review: transcript, heuristic scorecard, and reviewer notes"
       />
-      <ScorecardView scorecard={detail.scorecard} />
+      <SessionStatusPanel session={detail.session} />
+      <ScorecardView scorecard={detail.scorecard} session={detail.session} />
       <TranscriptView messages={detail.transcript} />
       <ReviewerNotes notes={detail.reviewer_notes} />
     </div>

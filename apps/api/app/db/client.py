@@ -1,10 +1,5 @@
-"""Database client abstraction.
+"""Database access: in-memory unit of work by default; swap for Supabase-backed UoW later."""
 
-Mock DB is active in MVP. Supabase client integration should be added here later.
-"""
+from app.repositories.memory import get_unit_of_work
 
-from app.db.mock_db import mock_db
-
-
-def get_db():
-  return mock_db
+__all__ = ["get_unit_of_work"]

@@ -21,8 +21,9 @@ export const mockSession: InterviewSession = {
   id: "sess_001",
   candidate_id: "cand_001",
   phase: "technical_probe",
-  status: "active",
-  started_at: new Date().toISOString()
+  lifecycle_status: "active",
+  started_at: new Date().toISOString(),
+  interviewer_prompt_version: "deterministic_v1"
 };
 
 export const mockTranscript: InterviewMessage[] = [
@@ -47,7 +48,7 @@ export const mockTranscript: InterviewMessage[] = [
 export const mockApplicantDetails: ApplicantDetail[] = [
   {
     candidate: mockCandidates[0],
-    session: { ...mockSession, status: "completed", phase: "closing" },
+    session: { ...mockSession, lifecycle_status: "reviewed", phase: "closing", ended_at: new Date().toISOString() },
     transcript: mockTranscript,
     scorecard: {
       session_id: "sess_001",
@@ -58,6 +59,8 @@ export const mockApplicantDetails: ApplicantDetail[] = [
       match_score: 80,
       strengths: ["Strong backend fundamentals", "Clear tradeoff reasoning"],
       growth_areas: ["Could improve depth in monitoring strategy"],
+      grader_version: "heuristic_v1",
+      prompt_version: null,
       red_flags: [
         {
           label: "Vague incident ownership",

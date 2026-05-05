@@ -13,6 +13,17 @@ class InterviewPhase(str, Enum):
   closing = "closing"
 
 
+class InterviewLifecycleStatus(str, Enum):
+  """Session lifecycle for evidence-based review workflow (not auto-hire)."""
+
+  created = "created"
+  lobby = "lobby"
+  active = "active"
+  completed = "completed"
+  grading = "grading"
+  reviewed = "reviewed"
+
+
 class Candidate(BaseModel):
   id: str
   full_name: str
@@ -25,9 +36,13 @@ class InterviewSession(BaseModel):
   id: str
   candidate_id: str
   phase: InterviewPhase
-  status: Literal["active", "completed"]
+  lifecycle_status: InterviewLifecycleStatus
   started_at: str
   ended_at: Optional[str] = None
+  interviewer_prompt_version: Optional[str] = Field(
+    default=None,
+    description="Interviewer logic / prompt version producing turns (deterministic or LLM).",
+  )
 
 
 class InterviewMessage(BaseModel):
@@ -56,6 +71,11 @@ class Scorecard(BaseModel):
   growth_areas: List[str]
   red_flags: List[RedFlag]
   evidence: List[str]
+  grader_version: str = "heuristic_v1"
+  prompt_version: Optional[str] = Field(
+    default=None,
+    description="Audit trail for future LLM prompts; set when using model-based grading.",
+  )
 
 
 class ReviewerNote(BaseModel):
@@ -63,6 +83,15 @@ class ReviewerNote(BaseModel):
   candidate_id: str
   note: str
   created_at: str
+
+
+class AuditLogEntry(BaseModel):
+  id: str
+  action: str
+  entity_type: str
+  entity_id: str
+  created_at: str
+  detail: Optional[str] = None
 
 
 class ResumeSummary(BaseModel):
@@ -97,5 +126,5 @@ class ApplicantDetail(BaseModel):
   candidate: Candidate
   session: InterviewSession
   transcript: List[InterviewMessage]
-  scorecard: Scorecard
+  scorecard: Optional[Scorecard] = None
   reviewer_notes: List[ReviewerNote]
