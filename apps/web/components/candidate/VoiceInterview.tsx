@@ -84,7 +84,7 @@ const statusLabels: Record<VoiceState, string> = {
   ended: "Ended"
 };
 
-export function VoiceInterview() {
+export function VoiceInterview({ hideEmbeddedTextFallback = false }: { hideEmbeddedTextFallback?: boolean }) {
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [activityState, setActivityState] = useState<ActivityState>("Thinking");
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -565,10 +565,15 @@ export function VoiceInterview() {
       </div>
 
       {/* Text fallback */}
-      {showTextFallback && (
+      {showTextFallback && !hideEmbeddedTextFallback && (
         <div className="animate-fade-in-up">
           <TextInterview compact />
         </div>
+      )}
+      {showTextFallback && hideEmbeddedTextFallback && (
+        <p className="text-center text-sm text-amber-200/80">
+          Use the text interview panel above this page — it shares the same saved session when you start from the lobby.
+        </p>
       )}
     </div>
   );

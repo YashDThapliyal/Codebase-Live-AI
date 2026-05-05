@@ -2,16 +2,16 @@ import uuid
 
 from fastapi import APIRouter, HTTPException
 
-from app.db.client import get_db
-from app.db.mock_db import now_iso
 from app.models.schemas import Candidate, CandidateCreateRequest
+from app.repositories.memory import get_unit_of_work
+from app.utils.time import now_iso
 
 router = APIRouter()
 
 
 @router.post("", response_model=Candidate)
 def create_candidate(payload: CandidateCreateRequest):
-  db = get_db()
+  uow = get_unit_of_work()
   candidate = Candidate(
     id=f"cand_{uuid.uuid4().hex[:8]}",
     full_name=payload.full_name,
@@ -19,20 +19,20 @@ def create_candidate(payload: CandidateCreateRequest):
     role_applied=payload.role_applied,
     created_at=now_iso(),
   )
-  db.candidates[candidate.id] = candidate
+  uow.candidates.create(candidate)
   return candidate
 
 
 @router.get("", response_model=list[Candidate])
 def list_candidates():
-  db = get_db()
-  return list(db.candidates.values())
+  uow = get_unit_of_work()
+  return uow.candidates.list_all()
 
 
 @router.get("/{candidate_id}", response_model=Candidate)
 def get_candidate(candidate_id: str):
-  db = get_db()
-  candidate = db.candidates.get(candidate_id)
+  uow = get_unit_of_work()
+  candidate = uow.candidates.get(candidate_id)
   if not candidate:
     raise HTTPException(status_code=404, detail="Candidate not found")
   return candidate

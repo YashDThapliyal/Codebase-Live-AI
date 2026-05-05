@@ -6,6 +6,15 @@ export type InterviewPhase =
   | "candidate_questions"
   | "closing";
 
+/** Session lifecycle — evidence-based review workflow (not auto-hire). */
+export type InterviewLifecycleStatus =
+  | "created"
+  | "lobby"
+  | "active"
+  | "completed"
+  | "grading"
+  | "reviewed";
+
 export interface Candidate {
   id: string;
   full_name: string;
@@ -27,9 +36,11 @@ export interface InterviewSession {
   id: string;
   candidate_id: string;
   phase: InterviewPhase;
-  status: "active" | "completed";
+  lifecycle_status: InterviewLifecycleStatus;
   started_at: string;
   ended_at?: string;
+  /** Present when the backend records which interviewer logic produced turns. */
+  interviewer_prompt_version?: string | null;
 }
 
 export interface RedFlag {
@@ -49,6 +60,8 @@ export interface Scorecard {
   growth_areas: string[];
   red_flags: RedFlag[];
   evidence: string[];
+  grader_version?: string;
+  prompt_version?: string | null;
 }
 
 export interface ReviewerNote {
@@ -69,6 +82,12 @@ export interface ApplicantDetail {
   candidate: Candidate;
   session: InterviewSession;
   transcript: InterviewMessage[];
-  scorecard: Scorecard;
+  scorecard?: Scorecard | null;
   reviewer_notes: ReviewerNote[];
+}
+
+export interface InterviewTurnResponse {
+  message: string;
+  phase: InterviewPhase;
+  should_continue: boolean;
 }

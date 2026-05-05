@@ -1,22 +1,27 @@
 # Codebase Live AI
 
-Codebase Live AI is an AI-powered live interview screening platform for Codebase recruitment.
+Codebase Live AI is an **evidence-based interview review platform** for Codebase recruitment — not an auto-hiring bot. The system helps run consistent interviews, persist transcripts, generate evidence-linked scorecards, and support human reviewers.
 
-Candidates complete a guided AI interview, interview transcripts are stored, a post-interview grader agent produces evidence-based scorecards, and admins review applicants in a lightweight dashboard.
+Candidates complete a guided interview (text-first MVP), transcripts and scorecards are stored, and admins review applicants in a lightweight dashboard.
 
 ## Why This Repo Is Structured This Way
 
-This project is intentionally optimized for a 3-person team where humans focus on AI logic, backend/data, integration, and QA.
+This project is intentionally optimized for a small team where humans focus on AI logic, backend/data, integration, and QA.
 
 The frontend is scaffolded and generated so the team does **not** spend excessive time building UI from scratch. It is modern, Tailwind-based, mock-data friendly, and easy to replace later.
 
 ## Architecture
 
 - Monorepo layout with clear ownership boundaries
-- `apps/web`: Next.js + React + TypeScript + Tailwind frontend
-- `apps/api`: FastAPI backend with mock in-memory data
+- `apps/web`: Next.js + React + TypeScript + Tailwind frontend (calls the API for candidate + admin flows)
+- `apps/api`: FastAPI backend with a **repository layer** over an **in-memory store** by default (swap for Supabase/Postgres later)
 - `supabase/migrations`: Supabase-ready SQL schema + placeholder RLS
 - `docs`: project spec, contracts, phase planning, scoring rubric, ownership docs
+
+### Product direction
+
+- **Text interview** is the reliable MVP path (persisted Q&A, grading, admin review).
+- **Voice (OpenAI Realtime)** is **progressive enhancement**: optional, requires `OPENAI_API_KEY` on the backend only, and the UI falls back to text when unavailable.
 
 ## Team Split
 
@@ -41,6 +46,8 @@ See: `docs/TEAM_SPLIT.md`.
 cp .env.example .env
 ```
 
+Set `NEXT_PUBLIC_API_URL` if the API is not on `http://localhost:8000`. Leave `NEXT_PUBLIC_USE_MOCK_DATA` unset (or empty) so the web app uses the live API.
+
 ### 2) Run API
 
 ```bash
@@ -61,19 +68,35 @@ npm run dev
 
 Web runs on `http://localhost:3000`, API on `http://localhost:8000`.
 
+### 4) Backend tests
+
+```bash
+cd apps/api
+source .venv/bin/activate
+pytest
+```
+
+### 5) Candidate → admin demo flow
+
+1. Open `/candidate/login`, submit the form (creates a candidate via `POST /candidates`).
+2. In `/candidate/lobby`, click **Start Text Interview** (`POST /interviews/start`).
+3. Complete the text interview at `/candidate/interview`; **End interview** runs `POST /interviews/{id}/end` and `POST /grading/{id}`.
+4. Open `/admin/applicants` to see persisted applicants and scorecards.
+
 ## Environment Variables
 
 See `.env.example`.
 
-- `NEXT_PUBLIC_API_URL` for frontend API base URL
+- `NEXT_PUBLIC_API_URL` — frontend API base URL
+- `NEXT_PUBLIC_USE_MOCK_DATA` — set to `true` only for offline demos using `apps/web/lib/mockData.ts`
 - Supabase variables are placeholders for future integration
-- `OPENAI_API_KEY` is backend-only usage; never expose in frontend code
+- `OPENAI_API_KEY` is backend-only (Realtime voice); never expose in frontend code
 
 ## Development Roadmap
 
-- Milestone 1: Working scaffold with mock data (this repo state)
-- Milestone 2: Text-based interview MVP end-to-end
-- Later: Voice interview via OpenAI Realtime API (scaffold only right now)
+- Milestone 1: Working scaffold with mock data (historical)
+- **Current:** Text interview MVP with in-memory persistence, heuristic evidence-linked scorecards, admin API-backed views
+- Later: Supabase adapter implementing the same repository protocols, LLM-backed interviewer/grader with auditable `prompt_version`
 
 Detailed plan: `docs/PHASE_PLAN.md`.
 
@@ -93,8 +116,8 @@ When changing cross-cutting contracts, update:
 
 ## Current Scope
 
-- Text interview flow only
-- Mock resume parsing and mock grading
-- Mock backend data store
-- Supabase-ready migration placeholders
-- Realtime voice support deferred (scaffold and docs only)
+- Text interview flow with lifecycle states and persisted transcript
+- Heuristic grader with transcript-derived evidence (no LLM required)
+- Admin list/detail backed by API
+- Realtime voice scaffold (optional; not required for MVP)
+- Supabase-ready migration placeholders; production RLS not hardened

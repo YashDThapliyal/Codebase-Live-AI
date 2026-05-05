@@ -1,5 +1,5 @@
-import { VoiceInterview } from "@/components/candidate/VoiceInterview";
+import { CandidateInterviewShell } from "@/components/candidate/CandidateInterviewShell";
 
 export default function CandidateInterviewPage() {
-  return <VoiceInterview />;
+  return <CandidateInterviewShell />;
 }
