@@ -3,17 +3,17 @@
 from typing import List, Optional
 
 from app.models.schemas import ApplicantDetail, InterviewSession
-from app.repositories.memory import InMemoryUnitOfWork
+from typing import Any
 
 
-def _latest_session(uow: InMemoryUnitOfWork, candidate_id: str) -> Optional[InterviewSession]:
+def _latest_session(uow: Any, candidate_id: str) -> Optional[InterviewSession]:
   sessions = uow.interviews.list_sessions_for_candidate(candidate_id)
   if not sessions:
     return None
   return max(sessions, key=lambda s: s.started_at)
 
 
-def build_applicant_detail(uow: InMemoryUnitOfWork, candidate_id: str) -> Optional[ApplicantDetail]:
+def build_applicant_detail(uow: Any, candidate_id: str) -> Optional[ApplicantDetail]:
   candidate = uow.candidates.get(candidate_id)
   if not candidate:
     return None
@@ -32,7 +32,7 @@ def build_applicant_detail(uow: InMemoryUnitOfWork, candidate_id: str) -> Option
   )
 
 
-def list_applicant_summaries(uow: InMemoryUnitOfWork) -> List[ApplicantDetail]:
+def list_applicant_summaries(uow: Any) -> List[ApplicantDetail]:
   """One row per candidate who has at least one session, using the latest session."""
   candidate_ids = {s.candidate_id for s in uow.interviews.list_sessions()}
   details: List[ApplicantDetail] = []

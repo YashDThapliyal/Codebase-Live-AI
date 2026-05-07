@@ -5,38 +5,34 @@ import { useState } from "react";
 import { TextInterview } from "./TextInterview";
 import { VoiceInterview } from "./VoiceInterview";
 
-/**
- * Text interview is the reliable MVP path; voice is progressive enhancement (see README).
- */
 export function CandidateInterviewShell() {
-  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [mode, setMode] = useState<"voice" | "text">("voice");
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <div>
-        <h1 className="font-display text-lg font-bold text-white/90">Interview</h1>
-        <p className="mt-1 text-sm text-white/40">
-          Typed answers are persisted for evidence-based review. Voice is optional and requires backend OpenAI configuration.
-        </p>
+        <h1 className="text-xl font-semibold text-slate-900">Interview</h1>
+        <p className="mt-1 text-sm text-slate-600">Use voice or text mode. Voice ends automatically after 3 AI questions.</p>
       </div>
 
-      <TextInterview />
-
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
+      <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
         <button
           type="button"
-          onClick={() => setVoiceOpen((v) => !v)}
-          className="flex w-full items-center justify-between text-left text-sm font-medium text-white/50 transition hover:text-white/70"
+          onClick={() => setMode("voice")}
+          className={`rounded-md px-3 py-1.5 text-sm ${mode === "voice" ? "bg-brand-600 text-white" : "text-slate-700 hover:bg-slate-100"}`}
         >
-          <span>Optional: voice interview (realtime)</span>
-          <span className="text-xs text-white/30">{voiceOpen ? "Hide" : "Show"}</span>
+          Voice
         </button>
-        {voiceOpen ? (
-          <div className="mt-4 border-t border-white/[0.07] pt-4">
-            <VoiceInterview hideEmbeddedTextFallback />
-          </div>
-        ) : null}
+        <button
+          type="button"
+          onClick={() => setMode("text")}
+          className={`rounded-md px-3 py-1.5 text-sm ${mode === "text" ? "bg-brand-600 text-white" : "text-slate-700 hover:bg-slate-100"}`}
+        >
+          I prefer text
+        </button>
       </div>
+
+      {mode === "voice" ? <VoiceInterview /> : <TextInterview />}
     </div>
   );
 }

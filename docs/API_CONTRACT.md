@@ -2,6 +2,36 @@
 
 Base URL: `http://localhost:8000` (or `NEXT_PUBLIC_API_URL` from the web app)
 
+## Auth
+
+All non-health routes are cookie/Bearer protected.
+
+### POST /auth/register
+
+Create a local user with email/password.
+
+Request:
+
+```json
+{
+  "email": "candidate@example.com",
+  "password": "password123",
+  "role": "candidate"
+}
+```
+
+### POST /auth/login
+
+Authenticate with email/password and issue a signed session cookie.
+
+### POST /auth/logout
+
+Clear session cookie.
+
+### GET /auth/me
+
+Return authenticated user info.
+
 ## GET /health
 
 Response:

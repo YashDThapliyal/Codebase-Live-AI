@@ -116,6 +116,11 @@ class InterviewMessageRequest(BaseModel):
   message: str
 
 
+class InterviewTranscriptAppendRequest(BaseModel):
+  sender: Literal["ai", "candidate"]
+  content: str
+
+
 class InterviewTurnResponse(BaseModel):
   message: str
   phase: InterviewPhase

@@ -1,24 +1,57 @@
-"""End-to-end API coverage for text interview MVP and admin review."""
+"""End-to-end API coverage for text interview MVP and admin review with local auth."""
 
 from fastapi.testclient import TestClient
 
 
-def _create_candidate(client: TestClient) -> str:
+def _register_and_login(
+  client: TestClient,
+  *,
+  email: str,
+  password: str = "password123",
+  role: str = "candidate",
+):
+  r = client.post("/auth/register", json={"email": email, "password": password, "role": role})
+  assert r.status_code == 200
+
+
+def _create_candidate(client: TestClient, email: str = "test@example.com") -> str:
   r = client.post(
     "/candidates",
-    json={"full_name": "Test User", "email": "test@example.com", "role_applied": "Engineer"},
+    json={"full_name": "Test User", "email": email, "role_applied": "Engineer"},
   )
   assert r.status_code == 200
   return r.json()["id"]
 
 
-def test_create_candidate(client: TestClient):
-  cid = _create_candidate(client)
-  assert cid.startswith("cand_")
+def test_register_login_me_and_duplicate_email(client: TestClient):
+  r = client.post("/auth/register", json={"email": "candidate@example.com", "password": "password123"})
+  assert r.status_code == 200
+
+  r = client.get("/auth/me")
+  assert r.status_code == 200
+  assert r.json()["email"] == "candidate@example.com"
+
+  r = client.post("/auth/register", json={"email": "candidate@example.com", "password": "password123"})
+  assert r.status_code == 409
+
+  r = client.post("/auth/login", json={"email": "candidate@example.com", "password": "wrongpass"})
+  assert r.status_code == 401
+
+  r = client.post("/auth/login", json={"email": "candidate@example.com", "password": "password123"})
+  assert r.status_code == 200
+
+
+def test_create_candidate_requires_auth(client: TestClient):
+  r = client.post(
+    "/candidates",
+    json={"full_name": "No Auth", "email": "noauth@example.com", "role_applied": "Engineer"},
+  )
+  assert r.status_code == 401
 
 
 def test_start_begin_message_end_grade_admin_detail(client: TestClient):
-  cid = _create_candidate(client)
+  _register_and_login(client, email="candidate@example.com")
+  cid = _create_candidate(client, email="candidate@example.com")
 
   r = client.post("/interviews/start", json={"candidate_id": cid})
   assert r.status_code == 200
@@ -57,13 +90,21 @@ def test_start_begin_message_end_grade_admin_detail(client: TestClient):
   assert sc["grader_version"] == "heuristic_v1"
   assert sc["evidence"]
 
+  # Candidate should not access admin routes.
   r = client.get("/admin/applicants")
+  assert r.status_code == 403
+
+  # Admin login for admin review access.
+  admin_client = TestClient(client.app)
+  admin_client.post("/auth/register", json={"email": "admin@example.com", "password": "password123", "role": "admin"})
+
+  r = admin_client.get("/admin/applicants")
   assert r.status_code == 200
   rows = r.json()
   assert len(rows) >= 1
   assert any(row["candidate"]["id"] == cid for row in rows)
 
-  r = client.get(f"/admin/applicants/{cid}")
+  r = admin_client.get(f"/admin/applicants/{cid}")
   assert r.status_code == 200
   detail = r.json()
   assert detail["scorecard"] is not None
@@ -72,7 +113,8 @@ def test_start_begin_message_end_grade_admin_detail(client: TestClient):
 
 
 def test_empty_message_rejected(client: TestClient):
-  cid = _create_candidate(client)
+  _register_and_login(client, email="candidate2@example.com")
+  cid = _create_candidate(client, email="candidate2@example.com")
   r = client.post("/interviews/start", json={"candidate_id": cid})
   sid = r.json()["id"]
   client.post(f"/interviews/{sid}/begin")

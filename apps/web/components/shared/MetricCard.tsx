@@ -21,10 +21,10 @@ export function MetricCard({ label, value, max = 10, description, colorClass }: 
   const barColor = colorClass ?? getScoreColor(value, max);
 
   return (
-    <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+    <div className="rounded-lg border border-slate-200 bg-white p-4">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</span>
-        <span className="font-display text-xl font-bold text-slate-900">
+        <span className="text-xl font-semibold text-slate-900">
           {value}
           <span className="ml-0.5 text-sm font-medium text-slate-400">/{max}</span>
         </span>

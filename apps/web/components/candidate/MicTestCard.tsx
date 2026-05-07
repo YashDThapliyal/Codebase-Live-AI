@@ -6,10 +6,10 @@ export function MicTestCard() {
     <Card>
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold">Microphone Test</h3>
-        <Badge>Placeholder</Badge>
+        <Badge>Quick Check</Badge>
       </div>
       <p className="mt-2 text-sm text-slate-600">
-        Voice interview support is planned for a later phase. For now, complete the interview in text mode.
+        Allow microphone access in your browser before starting voice interview.
       </p>
     </Card>
   );

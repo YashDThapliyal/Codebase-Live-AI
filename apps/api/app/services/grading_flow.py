@@ -3,12 +3,12 @@
 from fastapi import HTTPException
 
 from app.models.schemas import InterviewLifecycleStatus, Scorecard
-from app.repositories.memory import InMemoryUnitOfWork
+from typing import Any
 from app.services.audit_service import log_audit
 from app.services.grading_service import grade_session_from_transcript
 
 
-def run_grading(uow: InMemoryUnitOfWork, session_id: str) -> Scorecard:
+def run_grading(uow: Any, session_id: str) -> Scorecard:
   session = uow.interviews.get_session(session_id)
   if not session:
     raise HTTPException(status_code=404, detail="Session not found")
