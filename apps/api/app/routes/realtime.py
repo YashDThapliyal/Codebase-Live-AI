@@ -3,10 +3,11 @@ import logging
 from datetime import datetime, timezone
 
 import httpx
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Depends, Request, Response
 from pydantic import BaseModel
 
 from app.config import settings
+from app.middleware.auth import require_auth
 
 router = APIRouter()
 logger = logging.getLogger("codebase_live_ai.realtime")
@@ -39,26 +40,34 @@ def _build_instructions(preferred_language: str | None) -> str:
   )
 
 
-def _client_secret_payload(model: str, preferred_language: str | None) -> dict:
+def _client_secret_payload(model: str, preferred_language: str | None, with_input_transcription: bool = True) -> dict:
   # silence_duration_ms controls how long we wait after speech stops before
   # committing the user's turn. Increasing it makes the AI less interruptive,
   # and interview mode should prefer slightly longer pauses so candidates can think.
+  session = {
+    "type": "realtime",
+    "model": model,
+    "instructions": _build_instructions(preferred_language),
+    "audio": {
+      "input": {
+        "turn_detection": {
+          "type": "server_vad",
+          "threshold": settings.realtime_vad_threshold,
+          "prefix_padding_ms": settings.realtime_vad_prefix_padding_ms,
+          "silence_duration_ms": settings.realtime_vad_silence_duration_ms,
+        }
+      },
+      "output": {"voice": "alloy"}
+    },
+  }
+  if with_input_transcription:
+    # Enable server-side speech-to-text for candidate audio so we can
+    # persist transcript lines reliably from realtime events.
+    session["input_audio_transcription"] = {"model": settings.openai_transcription_model}
+
   return {
     "session": {
-      "type": "realtime",
-      "model": model,
-      "instructions": _build_instructions(preferred_language),
-      "audio": {
-        "input": {
-          "turn_detection": {
-            "type": "server_vad",
-            "threshold": settings.realtime_vad_threshold,
-            "prefix_padding_ms": settings.realtime_vad_prefix_padding_ms,
-            "silence_duration_ms": settings.realtime_vad_silence_duration_ms,
-          }
-        },
-        "output": {"voice": "alloy"}
-      },
+      **session,
     }
   }
 
@@ -69,7 +78,7 @@ def options_realtime_session() -> Response:
 
 
 @router.post("/session")
-def create_realtime_session(payload: RealtimeSessionRequest):
+def create_realtime_session(payload: RealtimeSessionRequest, _user: dict = Depends(require_auth)):
   if not settings.openai_key_configured:
     return {"error": "OPENAI_API_KEY is not configured"}
 
@@ -91,6 +100,26 @@ def create_realtime_session(payload: RealtimeSessionRequest):
   except httpx.HTTPStatusError as exc:
     detail = exc.response.text
     logger.error("Client secret failed model=%s status=%s body=%s", primary_model, exc.response.status_code, detail)
+
+    # Compatibility fallback: if this API version rejects input_audio_transcription,
+    # retry without it so voice still works.
+    if exc.response.status_code == 400 and "input_audio_transcription" in detail:
+      try:
+        with httpx.Client(timeout=20.0) as client:
+          retry = client.post(
+            "https://api.openai.com/v1/realtime/client_secrets",
+            headers={
+              "Authorization": f"Bearer {settings.openai_api_key}",
+              "Content-Type": "application/json",
+            },
+            json=_client_secret_payload(primary_model, payload.preferred_language, with_input_transcription=False),
+          )
+          retry.raise_for_status()
+          data = retry.json()
+          data["transcription_fallback"] = "input_audio_transcription_not_supported"
+          return data
+      except httpx.HTTPError:
+        logger.exception("Client secret retry without input_audio_transcription failed")
 
     # Compatibility fallback: preview model strings may fail on GA client_secrets.
     if exc.response.status_code == 400 and "preview" in primary_model:
@@ -144,7 +173,7 @@ def create_realtime_session(payload: RealtimeSessionRequest):
 
 
 @router.post("/call")
-def create_realtime_call(payload: RealtimeCallRequest):
+def create_realtime_call(payload: RealtimeCallRequest, _user: dict = Depends(require_auth)):
   if not settings.openai_key_configured:
     return Response(content='{"error":"OPENAI_API_KEY is not configured"}', status_code=500, media_type="application/json")
 

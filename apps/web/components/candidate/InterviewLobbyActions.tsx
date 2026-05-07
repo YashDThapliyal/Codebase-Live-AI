@@ -35,7 +35,7 @@ export function InterviewLobbyActions() {
     <div className="mt-4 space-y-2">
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       <Button type="button" disabled={pending} onClick={() => void onStart()}>
-        {pending ? "Starting…" : "Start Text Interview"}
+        {pending ? "Starting..." : "Interview"}
       </Button>
     </div>
   );

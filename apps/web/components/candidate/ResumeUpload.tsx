@@ -9,16 +9,16 @@ export function ResumeUpload() {
 
   return (
     <Card>
-      <h3 className="text-base font-semibold">Resume Upload</h3>
-      <p className="mt-1 text-sm text-slate-600">Upload a PDF resume to personalize interview questions.</p>
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+      <h3 className="text-base font-semibold text-slate-900">Resume Upload (Optional)</h3>
+      <p className="mt-1 text-sm text-slate-600">Upload a PDF resume for future personalization features.</p>
+      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
         <input
           type="file"
           accept=".pdf"
           onChange={(e) => setFilename(e.target.files?.[0]?.name || "")}
-          className="block w-full rounded-lg border border-slate-300 bg-white p-2 text-sm"
+          className="block w-full rounded-md border border-slate-300 bg-white p-2 text-sm"
         />
-        <Button type="button">Save Resume</Button>
+        <Button type="button">Save</Button>
       </div>
       {filename ? <p className="mt-2 text-xs text-slate-500">Selected: {filename}</p> : null}
     </Card>

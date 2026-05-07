@@ -14,7 +14,7 @@ The frontend is scaffolded and generated so the team does **not** spend excessiv
 
 - Monorepo layout with clear ownership boundaries
 - `apps/web`: Next.js + React + TypeScript + Tailwind frontend (calls the API for candidate + admin flows)
-- `apps/api`: FastAPI backend with a **repository layer** over an **in-memory store** by default (swap for Supabase/Postgres later)
+- `apps/api`: FastAPI backend with a **repository layer** over **local SQLite** for MVP auth + persistence
 - `supabase/migrations`: Supabase-ready SQL schema + placeholder RLS
 - `docs`: project spec, contracts, phase planning, scoring rubric, ownership docs
 
@@ -89,13 +89,14 @@ See `.env.example`.
 
 - `NEXT_PUBLIC_API_URL` — frontend API base URL
 - `NEXT_PUBLIC_USE_MOCK_DATA` — set to `true` only for offline demos using `apps/web/lib/mockData.ts`
-- Supabase variables are placeholders for future integration
+- `AUTH_SECRET` — required for local session token signing
+- `SQLITE_DB_PATH` — optional custom SQLite file path (defaults to `data/codebase_live_ai.db`)
 - `OPENAI_API_KEY` is backend-only (Realtime voice); never expose in frontend code
 
 ## Development Roadmap
 
 - Milestone 1: Working scaffold with mock data (historical)
-- **Current:** Text interview MVP with in-memory persistence, heuristic evidence-linked scorecards, admin API-backed views
+- **Current:** Text + voice-capable MVP with SQLite persistence, local email/password auth, heuristic evidence-linked scorecards, admin API-backed views
 - Later: Supabase adapter implementing the same repository protocols, LLM-backed interviewer/grader with auditable `prompt_version`
 
 Detailed plan: `docs/PHASE_PLAN.md`.

@@ -12,12 +12,13 @@ from fastapi import HTTPException
 from app.models.schemas import (
   InterviewLifecycleStatus,
   InterviewMessage,
+  InterviewTranscriptAppendRequest,
   InterviewPhase,
   InterviewSession,
   InterviewStartRequest,
   InterviewTurnResponse,
 )
-from app.repositories.memory import InMemoryUnitOfWork
+from typing import Any
 from app.services.audit_service import log_audit
 from app.services.interviewer_service import (
   INTERVIEWER_PROMPT_VERSION,
@@ -28,7 +29,7 @@ from app.services.resume_parser_service import parse_resume
 from app.utils.time import now_iso
 
 
-def start_session(uow: InMemoryUnitOfWork, payload: InterviewStartRequest) -> InterviewSession:
+def start_session(uow: Any, payload: InterviewStartRequest) -> InterviewSession:
   if uow.candidates.get(payload.candidate_id) is None:
     raise HTTPException(status_code=404, detail="Candidate not found")
 
@@ -53,7 +54,7 @@ def start_session(uow: InMemoryUnitOfWork, payload: InterviewStartRequest) -> In
   return session
 
 
-def begin_session(uow: InMemoryUnitOfWork, session_id: str) -> InterviewSession:
+def begin_session(uow: Any, session_id: str) -> InterviewSession:
   session = uow.interviews.get_session(session_id)
   if not session:
     raise HTTPException(status_code=404, detail="Session not found")
@@ -90,7 +91,7 @@ def begin_session(uow: InMemoryUnitOfWork, session_id: str) -> InterviewSession:
 
 
 def post_candidate_message(
-  uow: InMemoryUnitOfWork, session_id: str, raw_message: str
+  uow: Any, session_id: str, raw_message: str
 ) -> InterviewTurnResponse:
   text = raw_message.strip()
   if not text:
@@ -143,7 +144,7 @@ def post_candidate_message(
   return turn
 
 
-def end_session(uow: InMemoryUnitOfWork, session_id: str) -> InterviewSession:
+def end_session(uow: Any, session_id: str) -> InterviewSession:
   session = uow.interviews.get_session(session_id)
   if not session:
     raise HTTPException(status_code=404, detail="Session not found")
@@ -166,3 +167,43 @@ def end_session(uow: InMemoryUnitOfWork, session_id: str) -> InterviewSession:
     detail="lifecycle=completed",
   )
   return session
+
+
+def append_transcript_message(
+  uow: Any, session_id: str, payload: InterviewTranscriptAppendRequest
+) -> InterviewMessage:
+  content = payload.content.strip()
+  if not content:
+    raise HTTPException(status_code=400, detail="Message content cannot be empty")
+
+  session = uow.interviews.get_session(session_id)
+  if not session:
+    raise HTTPException(status_code=404, detail="Session not found")
+
+  if session.lifecycle_status == InterviewLifecycleStatus.lobby:
+    session.lifecycle_status = InterviewLifecycleStatus.active
+    uow.interviews.update_session(session)
+    log_audit(
+      uow,
+      action="interview.begin",
+      entity_type="interview_session",
+      entity_id=session_id,
+      detail="lifecycle=active;source=voice",
+    )
+
+  if session.lifecycle_status != InterviewLifecycleStatus.active:
+    raise HTTPException(
+      status_code=409,
+      detail=f"Interview not accepting messages in state {session.lifecycle_status.value}",
+    )
+
+  message = InterviewMessage(
+    id=f"msg_{uuid.uuid4().hex[:8]}",
+    session_id=session_id,
+    sender=payload.sender,
+    content=content,
+    phase=session.phase,
+    created_at=now_iso(),
+  )
+  uow.interviews.append_message(message)
+  return message

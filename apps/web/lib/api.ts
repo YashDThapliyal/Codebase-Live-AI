@@ -16,6 +16,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     cache: "no-store",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...(init?.headers || {})
@@ -26,6 +27,35 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(text || `Request failed: ${res.status}`);
   }
   return res.json() as Promise<T>;
+}
+
+export async function register(payload: {
+  email: string;
+  password: string;
+  role?: "candidate" | "admin";
+}): Promise<{ user_id: string; email: string; role: string }> {
+  return apiFetch("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function login(payload: {
+  email: string;
+  password: string;
+}): Promise<{ user_id: string; email: string; role: string }> {
+  return apiFetch("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function me(): Promise<{ user_id: string; email: string; role: string }> {
+  return apiFetch("/auth/me");
+}
+
+export async function logout(): Promise<{ ok: boolean }> {
+  return apiFetch("/auth/logout", { method: "POST" });
 }
 
 export async function getHealth(): Promise<{ status: string }> {
@@ -118,6 +148,26 @@ export async function postInterviewMessage(sessionId: string, message: string): 
   });
 }
 
+export async function appendTranscriptMessage(
+  sessionId: string,
+  payload: { sender: "ai" | "candidate"; content: string }
+): Promise<InterviewMessage> {
+  if (USE_MOCK_FALLBACK) {
+    return {
+      id: `msg_mock_${Math.random().toString(36).slice(2, 8)}`,
+      session_id: sessionId,
+      sender: payload.sender,
+      content: payload.content,
+      phase: "intro",
+      created_at: new Date().toISOString()
+    };
+  }
+  return apiFetch<InterviewMessage>(`/interviews/${sessionId}/transcript-message`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
 export async function endInterview(sessionId: string): Promise<InterviewSession> {
   if (USE_MOCK_FALLBACK) {
     return {
@@ -160,6 +210,7 @@ export async function getApplicant(id: string): Promise<ApplicantDetail | null> 
 export async function createRealtimeSession(preferredLanguage?: string): Promise<unknown> {
   const res = await fetch(`${API_URL}/realtime/session`, {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json"
     },
@@ -178,6 +229,7 @@ export async function createRealtimeSession(preferredLanguage?: string): Promise
 export async function pushRealtimeDebugLog(payload: unknown): Promise<void> {
   await fetch(`${API_URL}/realtime/debug-log`, {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json"
     },

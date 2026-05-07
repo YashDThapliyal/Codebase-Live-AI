@@ -1,12 +1,12 @@
 import uuid
 
 from app.models.schemas import AuditLogEntry
-from app.repositories.memory import InMemoryUnitOfWork
+from typing import Any
 from app.utils.time import now_iso
 
 
 def log_audit(
-  uow: InMemoryUnitOfWork,
+  uow: Any,
   *,
   action: str,
   entity_type: str,
